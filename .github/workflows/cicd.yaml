@@ -1,0 +1,36 @@
+name: Test and Deploy Flask Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Build Docker Image
+      - name: Build Docker Image
+        run: |
+          docker build -t my-flask-app:latest .
+
+      # Step 4: Run tests
+      - name: Run Unit Tests
+        run: |
+          docker pytest tests/test_app.py --maxfail=1 --disable-warnings
+
+      # Step 7: Push Docker Image (optional)
+      - name: Push Docker Image
+        if: success()  # Only if tests pass
+        run: |
+          docker tag my-flask-app:latest ${{ secrets.DOCKER_USERNAME }}/my-flask-app:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-flask-app:latest
